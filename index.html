@@ -3,21 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>宏宇陶瓷 BI 经营驾驶舱</title>
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <title>制造业经营分析 · 知识框架（陶瓷/建材）</title>
   <style>
     :root {
       --bg: #0f172a;
       --panel: rgba(15, 23, 42, 0.55);
-      --panel-border: rgba(148, 163, 184, 0.28);
+      --border: rgba(148, 163, 184, 0.28);
       --text: #e2e8f0;
       --muted: #94a3b8;
       --accent: #38bdf8;
       --good: #22c55e;
       --warn: #f59e0b;
-      --bad: #ef4444;
       --shadow: 0 12px 30px rgba(2, 6, 23, 0.42);
       --radius: 16px;
     }
@@ -29,76 +25,74 @@
       font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.2), transparent 40%),
-        radial-gradient(circle at 80% 0%, rgba(34, 197, 94, 0.12), transparent 36%),
+        radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.15), transparent 42%),
+        radial-gradient(circle at 85% 10%, rgba(34, 197, 94, 0.1), transparent 38%),
         var(--bg);
       min-height: 100vh;
     }
 
-    .dashboard {
-      max-width: 1600px;
+    .page {
+      max-width: 1200px;
       margin: 0 auto;
       padding: 16px;
     }
 
     .glass {
       background: var(--panel);
-      border: 1px solid var(--panel-border);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
       box-shadow: var(--shadow);
     }
 
     .header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 12px;
-      padding: 14px 16px;
+      flex-wrap: wrap;
+      padding: 16px 18px;
       margin-bottom: 14px;
     }
 
-    .title-wrap h1 {
+    .header h1 {
       margin: 0;
-      font-size: 24px;
-      letter-spacing: 0.5px;
+      font-size: 22px;
+      font-weight: 700;
     }
 
-    .title-wrap p {
-      margin: 6px 0 0;
+    .header .sub {
+      margin: 8px 0 0;
+      font-size: 13px;
       color: var(--muted);
-      font-size: 13px;
+      max-width: 560px;
+      line-height: 1.5;
     }
 
-    .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      border: 1px solid rgba(56, 189, 248, 0.5);
-      background: rgba(30, 41, 59, 0.6);
+    .btn-export {
+      border: 1px solid rgba(56, 189, 248, 0.55);
+      background: rgba(30, 41, 59, 0.65);
       color: var(--text);
-      padding: 8px 12px;
-      border-radius: 10px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 14px;
       cursor: pointer;
-      font-size: 13px;
-      transition: all 0.2s;
+      white-space: nowrap;
+      transition: transform 0.15s, border-color 0.15s, background 0.15s;
     }
 
-    button:hover {
+    .btn-export:hover {
       transform: translateY(-1px);
       border-color: var(--accent);
-      background: rgba(14, 165, 233, 0.22);
+      background: rgba(14, 165, 233, 0.2);
     }
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(6, minmax(130px, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
-      margin-bottom: 14px;
       padding: 10px;
+      margin-bottom: 14px;
     }
 
     .tab-btn {
@@ -108,8 +102,8 @@
       border: 1px solid transparent;
       color: var(--muted);
       cursor: pointer;
-      background: rgba(30, 41, 59, 0.4);
       font-size: 13px;
+      background: rgba(30, 41, 59, 0.45);
     }
 
     .tab-btn.active {
@@ -118,880 +112,302 @@
       background: rgba(14, 165, 233, 0.22);
     }
 
-    .tab-panel {
-      display: block;
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .intro-card {
+      padding: 14px 16px;
       margin-bottom: 14px;
-    }
-
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .kpi-card {
-      grid-column: span 3;
-      padding: 12px;
-      min-height: 112px;
-    }
-
-    .kpi-label {
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-
-    .kpi-value {
-      font-size: 23px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .kpi-sub {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .trend-up { color: var(--good); }
-    .trend-warn { color: var(--warn); }
-    .trend-down { color: var(--bad); }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .chart-card {
-      padding: 10px;
-      min-height: 280px;
-    }
-
-    .chart-head {
-      font-size: 14px;
-      margin-bottom: 8px;
+      font-size: 13px;
+      line-height: 1.65;
       color: #cbd5e1;
     }
 
-    .chart-box {
-      width: 100%;
-      height: 240px;
+    .intro-card strong { color: #fbbf24; }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
     }
 
-    .col-12 { grid-column: span 12; }
-    .col-8 { grid-column: span 8; }
-    .col-6 { grid-column: span 6; }
-    .col-4 { grid-column: span 4; }
+    .metric-card {
+      padding: 14px 16px;
+      min-height: 140px;
+    }
+
+    .metric-card h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #f1f5f9;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      padding-bottom: 8px;
+    }
+
+    .metric-card .field {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-card .field span {
+      color: #e2e8f0;
+      display: block;
+      margin-top: 2px;
+      line-height: 1.5;
+    }
+
+    .section-title {
+      font-size: 14px;
+      color: #cbd5e1;
+      margin: 18px 0 10px;
+      padding-left: 4px;
+      border-left: 3px solid var(--accent);
+    }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 13px;
     }
 
     th, td {
       border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-      padding: 8px 6px;
+      padding: 10px 8px;
       text-align: left;
-      color: #dbeafe;
     }
 
     th { color: #93c5fd; font-weight: 600; }
 
-    .badge {
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-size: 11px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
+    .table-wrap {
+      padding: 12px 14px;
+      margin-top: 12px;
     }
 
-    .danger { color: #fecaca; background: rgba(239, 68, 68, 0.16); }
-    .warning { color: #fde68a; background: rgba(245, 158, 11, 0.16); }
-    .normal { color: #bbf7d0; background: rgba(34, 197, 94, 0.16); }
-
-    .model-zone {
-      margin-top: 18px;
-      padding: 12px;
-    }
-
-    .model-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 10px;
-    }
-
-    .model-card {
-      grid-column: span 4;
-      padding: 10px;
-      min-height: 250px;
-    }
-
-    .model-card .chart-box { height: 180px; }
-    .model-meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
-    .model-info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      margin-top: 8px;
-      font-size: 12px;
+    .reason-card {
+      padding: 14px 16px;
+      margin-top: 14px;
+      font-size: 13px;
+      line-height: 1.65;
       color: #cbd5e1;
     }
-    .model-info-item {
-      background: rgba(30, 41, 59, 0.48);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 10px;
-      padding: 6px;
-    }
-    .mini-kpi-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .mini-kpi {
-      flex: 1;
-      padding: 8px;
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      background: rgba(30, 41, 59, 0.45);
-    }
-    .mini-kpi .label {
-      color: #94a3b8;
-      font-size: 11px;
-      margin-bottom: 4px;
-    }
-    .mini-kpi .value {
-      font-size: 17px;
-      font-weight: 700;
-      color: #e2e8f0;
+
+    .reason-card ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
     }
 
-    .progress-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 6px;
+    @media (max-width: 900px) {
+      .tabs {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
-    .progress-row { font-size: 12px; color: #cbd5e1; }
-    .bar {
-      margin-top: 4px;
-      width: 100%;
-      height: 9px;
-      border-radius: 999px;
-      background: rgba(71, 85, 105, 0.45);
-      overflow: hidden;
-    }
-
-    .bar > span {
-      display: block;
-      height: 100%;
-      background: linear-gradient(90deg, #38bdf8, #22c55e);
-    }
-
-    @media (max-width: 1200px) {
-      .tabs { grid-template-columns: repeat(3, 1fr); }
-      .kpi-card { grid-column: span 4; }
-      .col-8, .col-6, .col-4 { grid-column: span 12; }
-      .model-card { grid-column: span 6; }
-    }
-
-    @media (max-width: 768px) {
-      .header { flex-direction: column; align-items: flex-start; }
-      .tabs { grid-template-columns: repeat(2, 1fr); }
-      .kpi-card { grid-column: span 6; }
-      .model-card { grid-column: span 12; }
-      .kpi-value { font-size: 20px; }
-      .chart-card { min-height: 250px; }
-      .chart-box { height: 200px; }
+    @media (max-width: 520px) {
+      .tabs { grid-template-columns: 1fr; }
+      .header h1 { font-size: 18px; }
     }
   </style>
 </head>
 <body>
-  <div id="dashboardCapture" class="dashboard">
-    <div class="header glass">
-      <div class="title-wrap">
-        <h1>宏宇陶瓷集团 BI 经营驾驶舱</h1>
-        <p>1997-2025｜全渠道经营监控｜陶瓷行业特征指标体系</p>
+  <div class="page">
+    <header class="header glass">
+      <div>
+        <h1>制造业经营分析 · 知识框架</h1>
+        <p class="sub">面向陶瓷/建材行业：指标口径、业务用途与可导出 AI 知识库（JSON）。指标卡片均带 <code style="color:#94a3b8;font-size:12px;">data-*</code> 元数据，供 RAG / Agent 消费。</p>
       </div>
-      <div class="actions">
-        <button id="btnExportPng">导出 PNG</button>
-        <button id="btnExportPdf">导出 PDF</button>
+      <button type="button" class="btn-export" id="btnExportKb" title="扫描页面内所有带 data-name 的指标卡片">📦 导出AI知识库(JSON)</button>
+    </header>
+
+    <nav class="tabs glass" id="tabNav" aria-label="知识模块切换">
+      <button type="button" class="tab-btn active" data-tab="tab1">生产管理指标</button>
+      <button type="button" class="tab-btn" data-tab="tab2">质量管理指标</button>
+      <button type="button" class="tab-btn" data-tab="tab3">库存与采购指标</button>
+      <button type="button" class="tab-btn" data-tab="tab4">销售与渠道指标</button>
+    </nav>
+
+    <!-- Tab1 -->
+    <section id="tab1" class="tab-panel active">
+      <div class="intro-card glass">
+        <strong>陶瓷/建材行业特征（生产侧）</strong><br />
+        烧成周期长、窑炉与产线耦合度高；规格与花色 SKU 多、换产频繁；能耗与碳排敏感；优等品率与节拍、温控、原料批次强相关。经营分析需将<strong>产量、设备综合效率（OEE）、窑炉利用率、单位能耗</strong>与质量、库存联动解读，避免“只看产量不看结构与损耗”。
       </div>
-    </div>
+      <div class="metric-grid" id="gridProd"></div>
+    </section>
 
-    <div class="tabs glass" id="tabs">
-      <div class="tab-btn active" data-target="tab1">经营概览</div>
-      <div class="tab-btn" data-target="tab2">销售分析</div>
-      <div class="tab-btn" data-target="tab3">生产监控</div>
-      <div class="tab-btn" data-target="tab4">库存与采购</div>
-      <div class="tab-btn" data-target="tab5">经销商与工程</div>
-      <div class="tab-btn" data-target="tab6">营销与财务</div>
-    </div>
+    <!-- Tab2 -->
+    <section id="tab2" class="tab-panel">
+      <div class="metric-grid" id="gridQuality"></div>
+      <h2 class="section-title">不良品归因示例（陶瓷产线）</h2>
+      <div class="table-wrap glass">
+        <table>
+          <thead>
+            <tr><th>原因类别</th><th>占比（示例）</th><th>典型表现</th></tr>
+          </thead>
+          <tbody id="tbodyDefect"></tbody>
+        </table>
+      </div>
+    </section>
 
-    <section id="tab1" class="tab-panel"></section>
-    <section id="tab2" class="tab-panel"></section>
-    <section id="tab3" class="tab-panel"></section>
-    <section id="tab4" class="tab-panel"></section>
-    <section id="tab5" class="tab-panel"></section>
-    <section id="tab6" class="tab-panel"></section>
+    <!-- Tab3 -->
+    <section id="tab3" class="tab-panel">
+      <div class="metric-grid" id="gridInv"></div>
+      <div class="reason-card glass">
+        <strong>呆滞库存常见原因（陶瓷/建材）</strong>
+        <ul>
+          <li><strong>工程尾货与批次色差</strong>：同一项目多批次供货，余料难以并入零售动销。</li>
+          <li><strong>规格滞销</strong>：非常规厚度/尺寸或已下市花色，渠道匹配度低。</li>
+          <li><strong>预测偏差</strong>：促销或地产周期误判导致备货超前。</li>
+          <li><strong>质量降级</strong>：优等品转一级品后定价与渠道未同步，周转变慢。</li>
+        </ul>
+      </div>
+    </section>
 
-    <section class="model-zone glass">
-      <div class="chart-head">分析模型展示区</div>
-      <div class="model-grid">
-        <div class="model-card glass">
-          <div class="chart-head">销量预测（未来30天）</div>
-          <div id="modelForecast" class="chart-box"></div>
-          <div class="model-meta">预测误差 MAPE：7.2%，已纳入促销和季节因子</div>
-        </div>
-        <div class="model-card glass">
-          <div class="chart-head">经销商分级（RFM衍生）</div>
-          <div id="modelDealerSeg" class="chart-box"></div>
-          <div class="model-meta">分级维度：提货额、提货频次、合作年限</div>
-        </div>
-        <div class="model-card glass">
-          <div class="chart-head">呆滞库存预警</div>
-          <div class="progress-wrap">
-            <div class="progress-row">高风险 SKU 占比 8.6%
-              <div class="bar"><span style="width: 86%; background: linear-gradient(90deg,#f59e0b,#ef4444);"></span></div>
-            </div>
-            <div class="progress-row">90天无动销 SKU：126 个
-              <div class="bar"><span style="width: 63%;"></span></div>
-            </div>
-            <div class="progress-row">预计30天去化率：42%
-              <div class="bar"><span style="width: 42%; background: linear-gradient(90deg,#38bdf8,#22c55e);"></span></div>
-            </div>
-          </div>
-          <div class="model-meta">与库存Tab联动，重点关注高库龄工程余料</div>
-        </div>
-        <div class="model-card glass">
-          <div class="chart-head">优等品率归因</div>
-          <div id="modelQualityCause" class="chart-box"></div>
-          <div class="model-info-grid">
-            <div class="model-info-item">原料稳定性：32%（批次波动）</div>
-            <div class="model-info-item">温控工艺：28%（烧成曲线）</div>
-            <div class="model-info-item">操作一致性：22%（班组差异）</div>
-            <div class="model-info-item">设备状态：12%（窑后缺陷）</div>
-          </div>
-          <div class="model-meta">归因目标：从 94.6% 提升至 95.2%</div>
-        </div>
-        <div class="model-card glass">
-          <div class="chart-head">促销ROI评估</div>
-          <div id="modelRoiEval" class="chart-box"></div>
-          <div class="model-meta">高ROI活动优先资源倾斜，低ROI渠道降本提效</div>
-        </div>
-        <div class="model-card glass">
-          <div class="chart-head">窑炉能耗预测（近30天）</div>
-          <div class="mini-kpi-row">
-            <div class="mini-kpi">
-              <div class="label">预测准确率</div>
-              <div class="value">MAPE 5.8%</div>
-            </div>
-            <div class="mini-kpi">
-              <div class="label">当前单位能耗</div>
-              <div class="value">2.86 kg</div>
-            </div>
-          </div>
-          <div id="modelKilnEnergy" class="chart-box"></div>
-          <div class="model-meta">基于XGBoost算法，输入产量/品类/季节等特征</div>
-        </div>
-        <div class="model-card glass">
-          <div class="chart-head">价格弹性模型</div>
-          <div id="modelPriceElasticity" class="chart-box"></div>
-          <div class="model-meta">弹性系数：大理石 -1.8、岩板 -1.2、釉面砖 -2.1（回归拟合）</div>
-        </div>
-        <div class="model-card glass">
-          <div class="chart-head">工程回款风险预警</div>
-          <div class="mini-kpi-row">
-            <div class="mini-kpi">
-              <div class="label">高风险项目数</div>
-              <div class="value">5 个</div>
-            </div>
-            <div class="mini-kpi">
-              <div class="label">逾期金额</div>
-              <div class="value">2,860 万</div>
-            </div>
-          </div>
-          <div id="modelPaybackRiskTable"></div>
-        </div>
+    <!-- Tab4 -->
+    <section id="tab4" class="tab-panel">
+      <div class="metric-grid" id="gridSales"></div>
+      <h2 class="section-title">经销商分级标准（示例）</h2>
+      <div class="table-wrap glass">
+        <table>
+          <thead>
+            <tr><th>等级</th><th>月均提货额（示例口径）</th><th>管理动作</th></tr>
+          </thead>
+          <tbody id="tbodyDealer"></tbody>
+        </table>
       </div>
     </section>
   </div>
 
   <script>
-    const baseTextStyle = { color: "#cbd5e1" };
-    const axisStyle = {
-      axisLine: { lineStyle: { color: "rgba(148,163,184,0.35)" } },
-      axisLabel: { color: "#94a3b8" },
-      splitLine: { lineStyle: { color: "rgba(148,163,184,0.16)" } }
-    };
-    const chartInstances = [];
+    const ATTRS = ["data-name", "data-module", "data-type", "data-formula", "data-definition", "data-business-scene"];
 
-    const mock = {
-      monthlySales: [1.18, 1.26, 1.31, 1.43, 1.58, 1.62, 1.49, 1.54, 1.66, 1.74, 1.82, 1.93],
-      monthlyYoY: [6.1, 7.3, 8.5, 9.2, 10.8, 11.6, 10.4, 10.7, 11.2, 12.1, 12.8, 13.4],
-      channels: { dealer: 58.2, engineering: 36.6, newRetail: 5.2 },
-      channelSales12m: {
-        dealer: [0.68,0.72,0.75,0.82,0.9,0.94,0.88,0.9,0.97,1.01,1.08,1.12],
-        engineering: [0.42,0.45,0.47,0.52,0.58,0.6,0.54,0.56,0.61,0.66,0.69,0.73],
-        newRetail: [0.03,0.04,0.05,0.06,0.08,0.08,0.07,0.08,0.09,0.1,0.11,0.12]
-      },
-      regions: [
-        { name: "广东", value: 23.8 }, { name: "江苏", value: 10.5 }, { name: "浙江", value: 10.2 }, { name: "山东", value: 8.6 },
-        { name: "福建", value: 7.8 }, { name: "四川", value: 6.3 }, { name: "河南", value: 5.8 }, { name: "湖北", value: 5.3 }
-      ],
-      cityTop10: [
-        { n: "佛山", v: 2.15 }, { n: "广州", v: 1.89 }, { n: "深圳", v: 1.62 }, { n: "杭州", v: 1.28 }, { n: "苏州", v: 1.22 },
-        { n: "南京", v: 1.18 }, { n: "武汉", v: 1.05 }, { n: "成都", v: 1.01 }, { n: "郑州", v: 0.94 }, { n: "济南", v: 0.88 }
-      ],
-      categories: [
-        { n: "大理石瓷砖", sales: 32.5, margin: 38.2 },
-        { n: "釉面砖/现代砖", sales: 24.8, margin: 32.6 },
-        { n: "岩板/大板", sales: 18.6, margin: 42.5 },
-        { n: "星钻/星纹系列", sales: 14.2, margin: 45.8 },
-        { n: "其他", sales: 9.9, margin: 28.4 }
-      ],
-      baseProd: [
-        { name: "佛山三水基地", output: 3.8, quality: 95.2, kiln: 91.2 },
-        { name: "清远基地", output: 3.2, quality: 94.1, kiln: 88.6 },
-        { name: "肇庆基地", output: 2.5, quality: 94.5, kiln: 87.8 }
-      ],
-      quality30d: [94.1,94.2,94.4,94.3,94.6,94.7,94.6,94.8,95.0,94.9,94.8,94.7,94.6,94.4,94.5,94.7,94.6,94.8,94.9,94.8,94.7,94.9,94.8,94.7,94.6,94.5,94.6,94.7,94.8,94.6],
-      linesEff: [
-        { name: "1#抛光线", value: 92.8 }, { name: "2#喷墨线", value: 90.5 }, { name: "3#压机线", value: 89.8 },
-        { name: "4#窑后线", value: 88.4 }, { name: "5#岩板线", value: 87.3 }
-      ],
-      energy6m: [3.02, 2.98, 2.94, 2.91, 2.88, 2.86],
-      inventoryDays: [61, 58, 56, 54, 53, 52.3],
-      inventoryCats: [
-        { name: "大理石瓷砖", value: 35 }, { name: "釉面砖", value: 28 }, { name: "岩板", value: 19 },
-        { name: "工程定制", value: 12 }, { name: "其他", value: 6 }
-      ],
-      stagnantSku: [
-        ["HY-YS-8801", "釉面砖", 12800, 126, "高", "加大工程渠道折扣"],
-        ["HY-MB-6012", "大理石瓷砖", 9600, 103, "中", "门店陈列与团购联动"],
-        ["HY-RB-1209", "岩板", 5200, 142, "高", "专项去库存直播场"],
-        ["HY-XZ-9003", "星钻系列", 4600, 95, "中", "设计师渠道样板间投放"],
-        ["HY-GC-7208", "工程砖", 15800, 168, "高", "工程尾盘包销处理"]
-      ],
-      dealerLevel: [
-        { name: "S级", value: 39 }, { name: "A级", value: 107 }, { name: "B级", value: 219 }, { name: "C级", value: 121 }
-      ],
-      dealerTop10: [
-        ["佛山宏图建材", "华南", 428, "+16.2%"], ["广州星誉陶瓷", "华南", 401, "+13.6%"], ["杭州艺居建材", "华东", 386, "+12.1%"],
-        ["苏州万家陶业", "华东", 362, "+10.8%"], ["武汉尚品空间", "华中", 341, "+9.7%"], ["成都锦程建材", "西南", 330, "+8.9%"],
-        ["郑州荣泰陶瓷", "华中", 318, "+8.2%"], ["济南鸿盛装饰", "华北", 307, "+7.9%"], ["南京辰星建材", "华东", 299, "+7.5%"], ["深圳新美家居", "华南", 286, "+7.3%"]
-      ],
-      projects: [
-        ["北京大兴机场配套", "进行中", 78, "2026-09"], ["广州地铁上盖综合体", "进行中", 64, "2026-11"],
-        ["杭州未来社区项目", "交付冲刺", 89, "2026-07"], ["雄安安置房一期", "进行中", 55, "2026-12"], ["深圳会展中心改造", "交付冲刺", 92, "2026-06"]
-      ],
-      roiChannels: [
-        { n: "抖音直播", in: 186, out: 856, roi: 4.6 },
-        { n: "短视频/短剧", in: 98, out: 412, roi: 4.2 },
-        { n: "设计师渠道", in: 156, out: 538, roi: 3.4 },
-        { n: "展会/活动", in: 286, out: 886, roi: 3.1 },
-        { n: "传统广告", in: 124, out: 298, roi: 2.4 }
-      ],
-      expenseVsBudget: { expense: [122,126,128,132,139,145,142,148,151,156,161,166], budget: [125,128,130,133,138,141,143,146,149,153,157,160] },
-      qualityCause: [
-        { name: "原料", value: 32 },
-        { name: "温控", value: 28 },
-        { name: "操作", value: 22 },
-        { name: "设备", value: 12 },
-        { name: "其他", value: 6 }
-      ],
-      kilnEnergyActual: [2.98,2.96,2.95,2.93,2.92,2.91,2.9,2.89,2.88,2.89,2.87,2.88,2.86,2.87,2.85,2.84,2.86,2.85,2.84,2.83,2.84,2.83,2.82,2.83,2.81,2.82,2.81,2.8,2.81,2.8],
-      kilnEnergyPred: [2.97,2.97,2.94,2.94,2.91,2.9,2.9,2.88,2.89,2.88,2.88,2.87,2.87,2.86,2.86,2.85,2.85,2.84,2.84,2.84,2.83,2.82,2.82,2.82,2.81,2.81,2.8,2.8,2.8,2.79],
-      elasticityPoints: [
-        [-8.5, 15.2], [-7.2, 13.8], [-6.1, 12.1], [-5.5, 10.8], [-4.2, 8.6],
-        [-3.5, 7.1], [-2.6, 5.3], [-1.8, 3.9], [0.6, -1.2], [1.8, -3.5], [2.9, -5.9], [3.7, -7.4]
-      ],
-      paybackRiskProjects: [
-        ["华东新城综合体", "1.25亿", "0.82亿", "65.6%", "高", "冻结新增铺货，优先回款对账"],
-        ["湾区总部基地精装", "0.96亿", "0.55亿", "57.3%", "高", "启动法务函催并拆分节点验收"],
-        ["西南文旅城", "0.88亿", "0.51亿", "58.0%", "中高", "追加担保条款，锁定回款计划"],
-        ["华中安置房二期", "0.72亿", "0.38亿", "52.8%", "高", "项目经理周跟进，暂停非标供货"],
-        ["北方会展中心扩建", "0.63亿", "0.31亿", "49.2%", "高", "提高预付款比例并压缩账期"]
-      ]
-    };
+    const productionMetrics = [
+      { name: "日产量（㎡）", module: "生产管理", type: "产出指标", formula: "当日各产线合格产出面积之和（㎡）", definition: "按班次/产线汇总，剔除报废与返工未入库部分。", scene: "排产负荷、基地间调配、与订单履约对齐。" },
+      { name: "月产量（万㎡）", module: "生产管理", type: "产出指标", formula: "∑日产量 / 10⁴，按自然月滚动。", definition: "与财务收入确认周期可对齐的产量口径。", scene: "目标分解、淡旺季对比、与能耗单耗联动。" },
+      { name: "OEE（综合设备效率）", module: "生产管理", type: "效率指标", formula: "可用率 × 性能稼动率 × 质量合格率（按设备或产线）", definition: "反映设备在时间、速度与质量三维度损失。", scene: "识别瓶颈工序、技改与维保优先级排序。" },
+      { name: "窑炉利用率", module: "生产管理", type: "产能指标", formula: "窑炉实际有效运行时间 / 计划运行时间 × 100%", definition: "停窑、升温曲线异常、待料等计入损失。", scene: "能源与产量平衡；陶瓷行业核心约束资源。" },
+      { name: "单位产品综合能耗", module: "生产管理", type: "成本/可持续", formula: "综合能源折标煤量（kg）/ 合格产量（㎡）", definition: "含烧成、干燥、抛光等主要工序折标口径。", scene: "节能技改 ROI、碳排与成本敏感性分析。" },
+      { name: "计划达成率", module: "生产管理", type: "计划指标", formula: "实际完成产量 / 计划产量 × 100%", definition: "可按 SKU 大类或基地维度拆解。", scene: "销售承诺与供应链协同会议的核心看板。" },
+      { name: "换产损失时间占比", module: "生产管理", type: "损失指标", formula: "换产停机+调试时间 / 计划生产时间 × 100%", definition: "陶瓷多花色小批量下换产频繁，需单独监控。", scene: "排产优化、经济批量与库存策略的输入。" },
+      { name: "设备故障率 / MTBF", module: "生产管理", type: "可靠性指标", formula: "故障停机时长 / 计划运行时长；或平均故障间隔时间 MTBF", definition: "压机、窑炉、抛光线等关键设备单独统计。", scene: "预防性维护预算、备件安全库存设定。" }
+    ];
 
-    function initTabContent() {
-      document.getElementById("tab1").innerHTML = `
-        ${renderKpiGrid([
-          ["年度销售额", "18.6 亿元", "同比 +12.6%", "trend-up", "全渠道汇总"],
-          ["目标完成率", "78.5%", "目标 23.7亿", "trend-warn", "实际/目标"],
-          ["总产量（㎡）", "2,860 万㎡", "环比 +5.2%", "trend-up", "各基地产量合计"],
-          ["优等品率", "94.6%", "目标 95%", "trend-warn", "优等品/总产量"],
-          ["新开门店数", "108 家", "年度目标150家", "trend-up", "累计新开店"],
-          ["库存周转天数", "52.3 天", "目标 ≤45天", "trend-warn", "平均库存/日均销量"],
-          ["直播订单量", "11,356 单", "开门红活动", "trend-up", "单场峰值"],
-          ["工程合同额", "6.8 亿元", "占比 36.6%", "trend-up", "工程渠道/总销售"]
-        ])}
-        <div class="grid">
-          <div class="chart-card glass col-8"><div class="chart-head">近12月销售趋势（亿元）</div><div id="salesTrend" class="chart-box"></div></div>
-          <div class="chart-card glass col-4"><div class="chart-head">年度目标达成仪表盘</div><div id="targetGauge" class="chart-box"></div></div>
-        </div>`;
+    const qualityMetrics = [
+      { name: "优等品率", module: "质量管理", type: "结果指标", formula: "优等品产量 / 总产量 × 100%", definition: "陶瓷行业对外品质承诺与定价核心口径。", scene: "品牌溢价、工程验收条款、与工艺参数优化闭环。" },
+      { name: "一次合格率", module: "质量管理", type: "过程指标", formula: "首检合格批次 / 总批次 × 100%", definition: "不含返工后合格的“二次过关”口径（可按企业定义调整）。", scene: "减少返工能耗与隐性成本。" },
+      { name: "客诉率（PPM）", module: "质量管理", type: "外部质量", formula: "客诉件数 / 销售面积（或片数）× 10⁶", definition: "按区域、渠道、SKU 下钻。", scene: "渠道质量画像、与物流破损率区分。" },
+      { name: "退货率", module: "质量管理", type: "外部质量", formula: "退货金额或面积 / 销售金额或面积 × 100%", definition: "需约定是否含工程余料退回。", scene: "经销商政策与质量索赔管理。" },
+      { name: "疵点密度", module: "质量管理", type: "过程指标", formula: "抽检缺陷点数 / 抽检面积", definition: "针孔、色差、尺寸偏差等按企业缺陷字典编码。", scene: "喷墨/窑后工序质量预警。" },
+      { name: "抽检合格率", module: "质量管理", type: "过程指标", formula: "抽检合格批次数 / 抽检总批次数 × 100%", definition: "与实验室理化指标（吸水率、破坏强度等）可并列。", scene: "出货放行与批次追溯。" },
+      { name: "质量成本率", module: "质量管理", type: "成本指标", formula: "（预防+鉴定+内部损失+外部损失）/ 销售收入 × 100%", definition: "COQ 四象限，陶瓷行业外部损失常含工程罚款。", scene: "质量投入 ROI 与管理层汇报。" }
+    ];
 
-      document.getElementById("tab2").innerHTML = `
-        ${renderKpiGrid([
-          ["经销渠道占比", "58.2%", "同比 +5.6%", "trend-up", ""],
-          ["工程渠道占比", "36.6%", "同比 +8.2%", "trend-up", ""],
-          ["新零售渠道占比", "5.2%", "同比 +156%", "trend-up", ""],
-          ["覆盖省份", "28 个", "—", "", ""],
-          ["覆盖城市", "186 座", "—", "", ""],
-          ["TOP10客户贡献", "42.5%", "—", "", ""]
-        ])}
-        <div class="grid">
-          <div class="chart-card glass col-4"><div class="chart-head">渠道销售额占比</div><div id="channelPie" class="chart-box"></div></div>
-          <div class="chart-card glass col-8"><div class="chart-head">各渠道销售趋势（亿元）</div><div id="channelTrend" class="chart-box"></div></div>
-          <div class="chart-card glass col-8"><div class="chart-head">区域销售热力（省份销售额，亿）</div><div id="regionHeat" class="chart-box"></div></div>
-          <div class="chart-card glass col-4"><div class="chart-head">城市TOP10（亿）</div><div id="cityTop10" class="chart-box"></div></div>
-          <div class="chart-card glass col-6"><div class="chart-head">产品品类销售额占比</div><div id="categorySales" class="chart-box"></div></div>
-          <div class="chart-card glass col-6"><div class="chart-head">产品毛利率对比</div><div id="categoryMargin" class="chart-box"></div></div>
-        </div>`;
+    const defectRows = [
+      ["原料与配方", "32%", "批次色差、坯体强度波动"],
+      ["烧成与温控", "28%", "窑温曲线偏移、过烧/欠烧"],
+      ["设备与工装", "18%", "辊棒、喷头等异常导致连续缺陷"],
+      ["操作与标准化", "14%", "上砖间距、清洁周期执行偏差"],
+      ["物流与仓储", "8%", "破损、受潮导致的终端客诉"]
+    ];
 
-      document.getElementById("tab3").innerHTML = `
-        ${renderKpiGrid([
-          ["日产量（㎡）", "9.5 万㎡", "环比 +3.2%", "trend-up", "各产线合计"],
-          ["优等品率", "94.6%", "目标 95%", "trend-warn", "优等品/总产量"],
-          ["一级品率", "3.8%", "—", "", "一级品/总产量"],
-          ["合格率", "98.4%", "—", "", "优等+一级"],
-          ["窑炉利用率", "89.6%", "目标 92%", "trend-warn", "实际运行/计划"],
-          ["单位能耗", "2.86 kg", "同比 -2.1%", "trend-up", "标煤/㎡"],
-          ["设备故障率", "1.8%", "目标 ≤1.5%", "trend-down", "故障时长/总时长"],
-          ["质检通过率", "97.2%", "—", "", "抽检合格/总抽检"]
-        ])}
-        <div class="grid">
-          <div class="chart-card glass col-6"><div class="chart-head">各基地产量对比（万㎡/日）</div><div id="baseOutput" class="chart-box"></div></div>
-          <div class="chart-card glass col-6"><div class="chart-head">优等品率趋势（近30天）</div><div id="qualityTrend" class="chart-box"></div></div>
-          <div class="chart-card glass col-6"><div class="chart-head">各产线效率排行</div><div id="lineEff" class="chart-box"></div></div>
-          <div class="chart-card glass col-6"><div class="chart-head">单位能耗趋势（kg标煤/㎡）</div><div id="energyTrend" class="chart-box"></div></div>
-        </div>`;
+    const inventoryMetrics = [
+      { name: "库存周转天数", module: "库存与采购", type: "效率指标", formula: "平均库存成本或数量 / 日均销售成本或数量", definition: "可按成品、原料、在制品分层。", scene: "资金占用与经营现金流压力评估。" },
+      { name: "呆滞库存占比", module: "库存与采购", type: "风险指标", formula: "呆滞品库存金额 / 总库存金额 × 100%（呆滞定义如 90 天无动销）", definition: "陶瓷 SKU 多，需与库龄、规格并列看。", scene: "促销去化、渠道调剂、减值计提预警。" },
+      { name: "动销率", module: "库存与采购", type: "结构指标", formula: "近 N 天有销售的 SKU 数 / 总 SKU 数 × 100%", definition: "N 通常取 30/60/90 天。", scene: "产品线瘦身与新品上市节奏。" },
+      { name: "采购准时率（OTD）", module: "库存与采购", type: "供应商绩效", formula: "准时到货订单行数 / 总采购订单行数 × 100%", definition: "准时窗口按合同约定（如 ±1 天）。", scene: "原料保供与生产连续性。" },
+      { name: "安全库存覆盖率", module: "库存与采购", type: "风险指标", formula: "当前库存可支撑天数 / 目标安全库存天数", definition: "关键原料（泥砂、釉料）可单独建模。", scene: "断料风险 vs 资金占用权衡。" },
+      { name: "缺货率 / 断货率", module: "库存与采购", type: "服务水平", formula: "缺货订单行数 / 总订单行数 × 100%", definition: "区分临时缺货与结构性停产。", scene: "销售损失与经销商满意度。" },
+      { name: "采购价格差异率", module: "库存与采购", type: "成本指标", formula: "（实际采购价 - 标准或预算价）/ 标准价 × 100%", definition: "大宗商品联动时按品类拆分。", scene: "毛利率敏感性、套保或长协决策。" }
+    ];
 
-      document.getElementById("tab4").innerHTML = `
-        ${renderKpiGrid([
-          ["库存周转天数", "52.3 天", "目标 ≤45天", "trend-warn", "平均库存/日均销量"],
-          ["动销率", "78.2%", "目标 85%", "trend-warn", "90天有销售SKU/总SKU"],
-          ["断货率", "2.8%", "目标 ≤2%", "trend-down", "缺货行数/订单行数"],
-          ["呆滞库存占比", "8.6%", "预警线 10%", "trend-warn", "90天无销售库存/总库存"],
-          ["采购准时率", "94.2%", "目标 98%", "trend-warn", "准时到货/总采购订单"],
-          ["原材料安全库存", "86%", "—", "", "实际/安全值"]
-        ])}
-        <div class="grid">
-          <div class="chart-card glass col-6"><div class="chart-head">库存周转趋势（天）</div><div id="turnoverTrend" class="chart-box"></div></div>
-          <div class="chart-card glass col-6"><div class="chart-head">各品类库存占比</div><div id="inventoryPie" class="chart-box"></div></div>
-          <div class="chart-card glass col-12">
-            <div class="chart-head">呆滞库存预警列表</div>
-            ${renderStagnantTable()}
-          </div>
-        </div>`;
+    const salesMetrics = [
+      { name: "经销渠道收入占比", module: "销售与渠道", type: "结构指标", formula: "经销渠道收入 / 总收入 × 100%", definition: "可与提货、回款、库存周转联动。", scene: "渠道政策与返利设计。" },
+      { name: "工程渠道收入占比", module: "销售与渠道", type: "结构指标", formula: "工程渠道收入 / 总收入 × 100%", definition: "含战略地产、市政、公建等。", scene: "账期与回款风险集中度。" },
+      { name: "新零售 / 电商占比", module: "销售与渠道", type: "结构指标", formula: "新零售渠道收入 / 总收入 × 100%", definition: "直播团购、O2O 等到店转化可归入此类。", scene: "年轻化与全域营销 ROI。" },
+      { name: "销售回款率", module: "销售与渠道", type: "现金流指标", formula: "本期销售回款 / 本期含税销售额 × 100%", definition: "工程渠道建议按项目合同节点拆分。", scene: "信用政策、DSO 管理、坏账准备。" },
+      { name: "DSO（应收账款周转天数）", module: "销售与渠道", type: "现金流指标", formula: "应收账款平均余额 / 日均赊销收入", definition: "工程与经销分池统计更有意义。", scene: "营运资本占用与融资需求。" },
+      { name: "订单履约率", module: "销售与渠道", type: "服务指标", formula: "按期足量交付订单数 / 总订单数 × 100%", definition: "交期含生产+仓储+物流全链路。", scene: "客户满意度与重复采购。" },
+      { name: "平米售价 / 客单价", module: "销售与渠道", type: "价格指标", formula: "销售收入 / 销售面积；或订单金额 / 订单数", definition: "需区分工程集采价与零售标价。", scene: "产品结构升级与促销折扣监控。" },
+      { name: "TOP 客户收入集中度", module: "销售与渠道", type: "风险指标", formula: "前 N 名客户收入 / 总收入 × 100%", definition: "N 常取 10 或 20。", scene: "客户集中度风险与议价能力。" }
+    ];
 
-      document.getElementById("tab5").innerHTML = `
-        ${renderKpiGrid([
-          ["活跃经销商数", "486 家", "年新增 108家", "trend-up", ""],
-          ["经销商平均提货额", "186 万元/月", "同比 +8.6%", "trend-up", ""],
-          ["工程合同签约额", "6.8 亿元", "完成率 72%", "trend-warn", ""],
-          ["工程回款率", "82.6%", "目标 90%", "trend-warn", ""],
-          ["在建工程项目", "42 个", "—", "", ""],
-          ["房企战略合作", "38 家", "百强房企", "trend-up", ""]
-        ])}
-        <div class="grid">
-          <div class="chart-card glass col-6"><div class="chart-head">经销商分级（S/A/B/C）</div><div id="dealerLevel" class="chart-box"></div></div>
-          <div class="chart-card glass col-6"><div class="chart-head">经销商TOP10排行</div>${renderDealerTopTable()}</div>
-          <div class="chart-card glass col-12"><div class="chart-head">工程项目进度</div>${renderProjectTable()}</div>
-        </div>`;
+    const dealerRows = [
+      ["S 级", "月均提货额 ≥ 300 万（示例）", "战略共投、新品首发、专属服务团队"],
+      ["A 级", "100 万 ~ 300 万", "稳定返利、联合营销、库存协同"],
+      ["B 级", "30 万 ~ 100 万", "培训赋能、动销诊断、阶梯激励"],
+      ["C 级", "< 30 万", "汰换预警、区域重整或转为二级分销"]
+    ];
 
-      document.getElementById("tab6").innerHTML = `
-        ${renderKpiGrid([
-          ["营销费用率", "8.6%", "预算内", "trend-up", ""],
-          ["直播ROI", "1:4.6", "行业领先", "trend-up", ""],
-          ["品牌曝光量", "1.2 亿", "双月话题", "trend-up", ""],
-          ["新零售订单占比", "5.2%", "同比 +156%", "trend-up", ""],
-          ["毛利率", "36.8%", "同比 +1.2pct", "trend-up", ""],
-          ["净利润率", "14.2%", "同比 +0.8pct", "trend-up", ""]
-        ])}
-        <div class="grid">
-          <div class="chart-card glass col-6"><div class="chart-head">各营销渠道ROI对比</div><div id="roiBar" class="chart-box"></div></div>
-          <div class="chart-card glass col-6"><div class="chart-head">月度费用 vs 预算（万）</div><div id="expenseBudget" class="chart-box"></div></div>
-          <div class="chart-card glass col-12"><div class="chart-head">利润构成瀑布图（亿）</div><div id="profitWaterfall" class="chart-box"></div></div>
-        </div>`;
+    function renderMetricCard(m) {
+      const esc = (s) => String(s).replace(/"/g, "&quot;");
+      return `
+        <article class="metric-card glass metric-export"
+          data-name="${esc(m.name)}"
+          data-module="${esc(m.module)}"
+          data-type="${esc(m.type)}"
+          data-formula="${esc(m.formula)}"
+          data-definition="${esc(m.definition)}"
+          data-business-scene="${esc(m.scene)}">
+          <h3>${m.name}</h3>
+          <div class="field">计算口径 <span>${m.formula}</span></div>
+          <div class="field">指标定义 <span>${m.definition}</span></div>
+          <div class="field">业务用途 <span>${m.scene}</span></div>
+        </article>`;
     }
 
-    function renderKpiGrid(items) {
-      return `<div class="kpi-grid">${items.map(i => `
-        <div class="kpi-card glass">
-          <div class="kpi-label">${i[0]}</div>
-          <div class="kpi-value">${i[1]}</div>
-          <div class="kpi-sub ${i[3] || ""}">${i[2] || ""}</div>
-          <div class="kpi-sub">${i[4] || ""}</div>
-        </div>
-      `).join("")}</div>`;
+    function renderTableRows(tbody, rows) {
+      tbody.innerHTML = rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("");
     }
 
-    function renderStagnantTable() {
-      return `<table>
-        <thead><tr><th>SKU</th><th>品类</th><th>库存量(㎡)</th><th>库龄(天)</th><th>预警等级</th><th>建议</th></tr></thead>
-        <tbody>${mock.stagnantSku.map(r => `
-          <tr>
-            <td>${r[0]}</td><td>${r[1]}</td><td>${r[2].toLocaleString()}</td><td>${r[3]}</td>
-            <td><span class="badge ${r[4] === "高" ? "danger" : "warning"}">${r[4]}</span></td><td>${r[5]}</td>
-          </tr>`).join("")}
-        </tbody>
-      </table>`;
-    }
+    document.getElementById("gridProd").innerHTML = productionMetrics.map(renderMetricCard).join("");
+    document.getElementById("gridQuality").innerHTML = qualityMetrics.map(renderMetricCard).join("");
+    document.getElementById("gridInv").innerHTML = inventoryMetrics.map(renderMetricCard).join("");
+    document.getElementById("gridSales").innerHTML = salesMetrics.map(renderMetricCard).join("");
+    renderTableRows(document.getElementById("tbodyDefect"), defectRows);
+    renderTableRows(document.getElementById("tbodyDealer"), dealerRows);
 
-    function renderDealerTopTable() {
-      return `<table>
-        <thead><tr><th>名称</th><th>区域</th><th>提货额(万)</th><th>增长率</th></tr></thead>
-        <tbody>${mock.dealerTop10.map(d => `<tr><td>${d[0]}</td><td>${d[1]}</td><td>${d[2]}</td><td class="trend-up">${d[3]}</td></tr>`).join("")}</tbody>
-      </table>`;
-    }
-
-    function renderProjectTable() {
-      return `<table>
-        <thead><tr><th>项目</th><th>状态</th><th>进度</th><th>计划交付</th></tr></thead>
-        <tbody>${mock.projects.map(p => `
-          <tr><td>${p[0]}</td><td>${p[1]}</td>
-            <td>${p[2]}%<div class="bar"><span style="width:${p[2]}%"></span></div></td>
-            <td>${p[3]}</td>
-          </tr>`).join("")}</tbody>
-      </table>`;
-    }
-
-    function renderPaybackRiskTable() {
-      return `<table>
-        <thead><tr><th>项目</th><th>合同额</th><th>已回款</th><th>回款率</th><th>风险</th><th>建议</th></tr></thead>
-        <tbody>${mock.paybackRiskProjects.map(r => `
-          <tr>
-            <td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td>
-            <td><span class="badge ${r[4] === "高" ? "danger" : "warning"}">${r[4]}</span></td><td>${r[5]}</td>
-          </tr>
-        `).join("")}</tbody>
-      </table>`;
-    }
-
-    function initChart(id, option) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const chart = echarts.init(el);
-      chart.setOption(option);
-      chartInstances.push(chart);
-    }
-
-    function buildCharts() {
-      const months = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
-      const modelDays = Array.from({ length: 30 }, (_, i) => `D${i + 1}`);
-      initChart("salesTrend", {
-        tooltip: { trigger: "axis" },
-        legend: { data: ["销售额", "同比"], textStyle: baseTextStyle },
-        xAxis: { type: "category", data: months, ...axisStyle },
-        yAxis: [{ type: "value", name: "亿元", ...axisStyle }, { type: "value", name: "%", ...axisStyle }],
-        series: [
-          { name: "销售额", type: "bar", data: mock.monthlySales, itemStyle: { color: "#38bdf8" } },
-          { name: "同比", type: "line", yAxisIndex: 1, smooth: true, data: mock.monthlyYoY, itemStyle: { color: "#22c55e" } }
-        ]
+    document.querySelectorAll("#tabNav .tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#tabNav .tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
       });
+    });
 
-      initChart("targetGauge", {
-        series: [{ type: "gauge", min: 0, max: 100, progress: { show: true, width: 16 }, axisLine: { lineStyle: { width: 16 } },
-          detail: { formatter: "{value}%", color: "#e2e8f0", fontSize: 24 }, data: [{ value: 78.5, name: "目标达成率" }],
-          title: { color: "#94a3b8" }, itemStyle: { color: "#22c55e" } }]
-      });
-
-      initChart("channelPie", {
-        tooltip: { trigger: "item" },
-        legend: { bottom: 0, textStyle: baseTextStyle },
-        series: [{ type: "pie", radius: ["35%","68%"], data: [
-          { name: "经销", value: mock.channels.dealer }, { name: "工程", value: mock.channels.engineering }, { name: "新零售", value: mock.channels.newRetail }
-        ]}]
-      });
-
-      initChart("channelTrend", {
-        tooltip: { trigger: "axis" },
-        legend: { data: ["经销","工程","新零售"], textStyle: baseTextStyle },
-        xAxis: { type: "category", data: months, ...axisStyle },
-        yAxis: { type: "value", name: "亿元", ...axisStyle },
-        series: [
-          { name: "经销", type: "line", smooth: true, data: mock.channelSales12m.dealer },
-          { name: "工程", type: "line", smooth: true, data: mock.channelSales12m.engineering },
-          { name: "新零售", type: "line", smooth: true, data: mock.channelSales12m.newRetail }
-        ]
-      });
-
-      initChart("regionHeat", {
-        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-        xAxis: { type: "category", data: mock.regions.map(i => i.name), ...axisStyle },
-        yAxis: { type: "value", name: "亿", ...axisStyle },
-        series: [{ type: "bar", data: mock.regions.map(i => i.value), itemStyle: { color: "#0ea5e9" } }]
-      });
-
-      initChart("cityTop10", {
-        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-        xAxis: { type: "value", ...axisStyle },
-        yAxis: { type: "category", data: mock.cityTop10.map(i => i.n).reverse(), ...axisStyle },
-        series: [{ type: "bar", data: mock.cityTop10.map(i => i.v).reverse(), itemStyle: { color: "#34d399" } }]
-      });
-
-      initChart("categorySales", {
-        tooltip: { trigger: "item" },
-        series: [{ type: "pie", radius: "65%", data: mock.categories.map(c => ({ name: c.n, value: c.sales })) }]
-      });
-
-      initChart("categoryMargin", {
-        tooltip: { trigger: "axis" },
-        xAxis: { type: "category", data: mock.categories.map(c => c.n), ...axisStyle },
-        yAxis: { type: "value", name: "%", ...axisStyle },
-        series: [{ type: "bar", data: mock.categories.map(c => c.margin), itemStyle: { color: "#f59e0b" } }]
-      });
-
-      initChart("baseOutput", {
-        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-        xAxis: { type: "value", ...axisStyle },
-        yAxis: { type: "category", data: mock.baseProd.map(i => i.name), ...axisStyle },
-        series: [{ type: "bar", data: mock.baseProd.map(i => i.output), itemStyle: { color: "#22c55e" } }]
-      });
-
-      initChart("qualityTrend", {
-        tooltip: { trigger: "axis" },
-        xAxis: { type: "category", data: Array.from({length: 30}, (_, i) => `${i+1}`), ...axisStyle },
-        yAxis: { type: "value", min: 93.8, max: 95.4, ...axisStyle },
-        series: [
-          { type: "line", smooth: true, areaStyle: {}, data: mock.quality30d, itemStyle: { color: "#38bdf8" } },
-          { type: "line", data: Array(30).fill(95), symbol: "none", lineStyle: { type: "dashed", color: "#f59e0b" } }
-        ]
-      });
-
-      initChart("lineEff", {
-        tooltip: { trigger: "axis" },
-        xAxis: { type: "category", data: mock.linesEff.map(i => i.name), ...axisStyle },
-        yAxis: { type: "value", min: 80, max: 100, ...axisStyle },
-        series: [{ type: "bar", data: mock.linesEff.map(i => i.value), itemStyle: { color: "#818cf8" } }]
-      });
-
-      initChart("energyTrend", {
-        tooltip: { trigger: "axis" },
-        xAxis: { type: "category", data: ["1月","2月","3月","4月","5月","6月"], ...axisStyle },
-        yAxis: { type: "value", ...axisStyle },
-        series: [{ type: "line", smooth: true, data: mock.energy6m, itemStyle: { color: "#14b8a6" } }]
-      });
-
-      initChart("turnoverTrend", {
-        tooltip: { trigger: "axis" },
-        xAxis: { type: "category", data: ["1月","2月","3月","4月","5月","6月"], ...axisStyle },
-        yAxis: { type: "value", ...axisStyle },
-        series: [
-          { type: "line", smooth: true, data: mock.inventoryDays, itemStyle: { color: "#38bdf8" } },
-          { type: "line", data: Array(6).fill(45), symbol: "none", lineStyle: { type: "dashed", color: "#ef4444" } }
-        ]
-      });
-
-      initChart("inventoryPie", {
-        tooltip: { trigger: "item" },
-        legend: { bottom: 0, textStyle: baseTextStyle },
-        series: [{ type: "pie", radius: ["35%","70%"], data: mock.inventoryCats }]
-      });
-
-      initChart("dealerLevel", {
-        tooltip: { trigger: "item" },
-        legend: { bottom: 0, textStyle: baseTextStyle },
-        series: [{ type: "pie", radius: ["40%","72%"], data: mock.dealerLevel }]
-      });
-
-      initChart("roiBar", {
-        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-        xAxis: { type: "value", ...axisStyle },
-        yAxis: { type: "category", data: mock.roiChannels.map(i => i.n), ...axisStyle },
-        series: [{ type: "bar", data: mock.roiChannels.map(i => i.roi), itemStyle: { color: "#22d3ee" } }]
-      });
-
-      initChart("expenseBudget", {
-        tooltip: { trigger: "axis" },
-        legend: { data: ["实际","预算"], textStyle: baseTextStyle },
-        xAxis: { type: "category", data: months, ...axisStyle },
-        yAxis: { type: "value", ...axisStyle },
-        series: [
-          { name: "实际", type: "line", smooth: true, data: mock.expenseVsBudget.expense, itemStyle: { color: "#f59e0b" } },
-          { name: "预算", type: "line", smooth: true, data: mock.expenseVsBudget.budget, itemStyle: { color: "#64748b" } }
-        ]
-      });
-
-      const income = 18.6, cost = -11.75, expense = -1.6, tax = -0.72, net = 4.53;
-      initChart("profitWaterfall", {
-        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-        xAxis: { type: "category", data: ["营收", "成本", "费用", "税费", "净利润"], ...axisStyle },
-        yAxis: { type: "value", name: "亿元", ...axisStyle },
-        series: [{ type: "bar", data: [income, cost, expense, tax, net], itemStyle: {
-          color: (p) => p.value >= 0 ? "#22c55e" : "#ef4444"
-        }}]
-      });
-
-      initChart("modelForecast", {
-        tooltip: { trigger: "axis" },
-        xAxis: { type: "category", data: modelDays, ...axisStyle },
-        yAxis: { type: "value", ...axisStyle },
-        series: [
-          { name: "预测", type: "line", smooth: true, data: Array.from({ length: 30 }, (_, i) => +(1.65 + Math.sin(i/4) * 0.08 + i*0.004).toFixed(2)), itemStyle: { color: "#38bdf8" } },
-          { name: "上界", type: "line", symbol: "none", lineStyle: { opacity: 0 }, data: Array.from({ length: 30 }, (_, i) => +(1.75 + Math.sin(i/4) * 0.08 + i*0.004).toFixed(2)), areaStyle: { color: "rgba(56,189,248,0.16)" }, stack: "band" },
-          { name: "下界", type: "line", symbol: "none", lineStyle: { opacity: 0 }, data: Array.from({ length: 30 }, (_, i) => +(1.55 + Math.sin(i/4) * 0.08 + i*0.004).toFixed(2)), stack: "band" }
-        ]
-      });
-
-      initChart("modelDealerSeg", {
-        tooltip: { trigger: "item" },
-        series: [{ type: "pie", radius: ["38%","72%"], data: mock.dealerLevel }]
-      });
-
-      initChart("modelQualityCause", {
-        tooltip: { trigger: "item" },
-        legend: { bottom: 0, textStyle: baseTextStyle },
-        series: [{ type: "pie", radius: ["35%", "68%"], data: mock.qualityCause }]
-      });
-
-      initChart("modelRoiEval", {
-        tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-        xAxis: { type: "category", data: mock.roiChannels.map(i => i.n), ...axisStyle },
-        yAxis: { type: "value", ...axisStyle },
-        series: [{ type: "bar", data: mock.roiChannels.map(i => i.roi), itemStyle: { color: "#14b8a6" } }]
-      });
-
-      initChart("modelKilnEnergy", {
-        tooltip: { trigger: "axis" },
-        legend: { data: ["实际能耗", "预测能耗"], textStyle: baseTextStyle },
-        xAxis: { type: "category", data: modelDays, ...axisStyle },
-        yAxis: { type: "value", name: "kg标煤/㎡", ...axisStyle },
-        series: [
-          { name: "实际能耗", type: "line", smooth: true, data: mock.kilnEnergyActual, itemStyle: { color: "#22c55e" } },
-          { name: "预测能耗", type: "line", smooth: true, data: mock.kilnEnergyPred, itemStyle: { color: "#38bdf8" }, lineStyle: { type: "dashed" } }
-        ]
-      });
-
-      const regData = modelDays.map((d, i) => [mock.elasticityPoints[0][0] + i * 0.4, -1.8 * (mock.elasticityPoints[0][0] + i * 0.4) / 2]);
-      initChart("modelPriceElasticity", {
-        tooltip: { trigger: "axis" },
-        legend: { data: ["样本点", "回归拟合线"], textStyle: baseTextStyle },
-        xAxis: { type: "value", name: "价格变动%", ...axisStyle },
-        yAxis: { type: "value", name: "销量变动%", ...axisStyle },
-        series: [
-          { name: "样本点", type: "scatter", data: mock.elasticityPoints, itemStyle: { color: "#f59e0b" } },
-          { name: "回归拟合线", type: "line", data: regData, symbol: "none", lineStyle: { color: "#38bdf8", width: 2 } }
-        ]
-      });
-
-      const riskTableNode = document.getElementById("modelPaybackRiskTable");
-      if (riskTableNode) riskTableNode.innerHTML = renderPaybackRiskTable();
-    }
-
-    function bindSectionNav() {
-      const tabBtns = document.querySelectorAll(".tab-btn");
-      tabBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-          tabBtns.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          const target = document.getElementById(btn.dataset.target);
-          if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-          chartInstances.forEach(c => c.resize());
+    function collectKnowledgeBase() {
+      const cards = document.querySelectorAll(".metric-export[data-name]");
+      const items = [];
+      cards.forEach(el => {
+        const row = {};
+        ATTRS.forEach(attr => {
+          const key = attr.replace(/^data-/, "").replace(/-/g, "_");
+          row[key] = el.getAttribute(attr) || "";
         });
+        items.push(row);
       });
+      return {
+        meta: {
+          title: "制造业经营分析知识框架",
+          industry: "陶瓷/建材",
+          version: "1.0",
+          exported_at: new Date().toISOString(),
+          metric_count: items.length
+        },
+        metrics: items
+      };
     }
 
-    function triggerDownload(dataUrl, filename) {
-      const link = document.createElement("a");
-      link.download = filename;
-      link.href = dataUrl;
-      link.click();
-    }
-
-    async function exportPng() {
-      try {
-        const node = document.getElementById("dashboardCapture");
-        chartInstances.forEach(c => c.resize());
-        await new Promise(resolve => setTimeout(resolve, 120));
-
-        const contentWidth = node.scrollWidth;
-        const contentHeight = node.scrollHeight;
-        const maxCanvasSize = 15000;
-        const scale = Math.min(2, maxCanvasSize / Math.max(contentWidth, contentHeight));
-
-        // 超长页面分段导出，避免浏览器画布尺寸限制导致“点击无反应”
-        if (contentHeight * scale > maxCanvasSize) {
-          const chunkHeight = Math.floor(maxCanvasSize / Math.max(scale, 0.5)) - 40;
-          let y = 0;
-          let part = 1;
-          while (y < contentHeight) {
-            const currentHeight = Math.min(chunkHeight, contentHeight - y);
-            const chunkCanvas = await html2canvas(node, {
-              backgroundColor: "#0f172a",
-              useCORS: true,
-              scale: Math.max(scale, 0.8),
-              width: contentWidth,
-              height: currentHeight,
-              x: 0,
-              y,
-              windowWidth: contentWidth,
-              windowHeight: currentHeight
-            });
-            triggerDownload(
-              chunkCanvas.toDataURL("image/png"),
-              `宏宇陶瓷BI驾驶舱_${Date.now()}_part${part}.png`
-            );
-            y += currentHeight;
-            part += 1;
-          }
-          return;
-        }
-
-        const canvas = await html2canvas(node, {
-          backgroundColor: "#0f172a",
-          useCORS: true,
-          scale: Math.max(scale, 0.8),
-          width: contentWidth,
-          height: contentHeight,
-          windowWidth: contentWidth,
-          windowHeight: contentHeight
-        });
-        triggerDownload(canvas.toDataURL("image/png"), `宏宇陶瓷BI驾驶舱_${Date.now()}.png`);
-      } catch (error) {
-        console.error("PNG 导出失败:", error);
-        alert("PNG 导出失败，请稍后重试（建议先用 PDF 导出）。");
-      }
-    }
-
-    async function exportPdf() {
-      const node = document.getElementById("dashboardCapture");
-      const canvas = await html2canvas(node, { scale: 2, useCORS: true, backgroundColor: "#0f172a" });
-      const img = canvas.toDataURL("image/png");
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF("p", "mm", "a4");
-      const w = 210;
-      const h = (canvas.height * w) / canvas.width;
-      let y = 0;
-      if (h <= 297) {
-        pdf.addImage(img, "PNG", 0, 0, w, h);
-      } else {
-        let pageHeightLeft = h;
-        let position = 0;
-        while (pageHeightLeft > 0) {
-          pdf.addImage(img, "PNG", 0, position, w, h);
-          pageHeightLeft -= 297;
-          position -= 297;
-          if (pageHeightLeft > 0) pdf.addPage();
-        }
-      }
-      pdf.save(`宏宇陶瓷BI驾驶舱_${Date.now()}.pdf`);
-    }
-
-    function bindExport() {
-      document.getElementById("btnExportPng").addEventListener("click", exportPng);
-      document.getElementById("btnExportPdf").addEventListener("click", exportPdf);
-    }
-
-    initTabContent();
-    buildCharts();
-    bindSectionNav();
-    bindExport();
-    window.addEventListener("resize", () => chartInstances.forEach(c => c.resize()));
+    document.getElementById("btnExportKb").addEventListener("click", () => {
+      const data = collectKnowledgeBase();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "制造业_知识库.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
   </script>
 </body>
 </html>
